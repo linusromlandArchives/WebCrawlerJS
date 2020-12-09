@@ -13,13 +13,19 @@ let linksFile = JSON.parse(fs.readFileSync("./links.json"));
 let startLength = linksFile.links.length;
 let linksToCreate = startLength + 200;
 
-if(process.argv[2]){
+if (process.argv[2]) {
   linksToCreate = startLength + process.argv[2];
-  console.log("Creating " + process.argv[2] + " new links!")
+  console.log("Creating " + process.argv[2] + " new links!");
 }
 
 //START URL
 let startUrl = "https://romland.space/";
+
+if (process.argv[3]) {
+  startUrl = process.argv[3];
+}
+
+console.log("Starting at " + startUrl);
 
 setTimeout(() => {
   main();
@@ -89,7 +95,7 @@ function addsOrUpdatesLink(url) {
     linksFile = JSON.parse(fs.readFileSync("./links.json"));
     let tmp = linksFile;
     for (let i = 0; i < tmp.links.length; i++) {
-      if (tmp.links[i].link == url){
+      if (tmp.links[i].link == url) {
         tmp.links[i].hits = tmp.links[i].hits + 1;
         console.log(
           "New HIT on: " +
@@ -98,8 +104,7 @@ function addsOrUpdatesLink(url) {
             tmp.links[i].hits +
             " hits!"
         );
-      } 
-      
+      }
     }
     fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
     linksFile = JSON.parse(fs.readFileSync("./links.json"));
