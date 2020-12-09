@@ -5,12 +5,12 @@ const fs = require("fs");
 const AbortController = require("abort-controller");
 let deadEnd = false;
 
-if (!fs.existsSync("links.json"))
-  fs.writeFileSync("links.json", '{"links":[]}');
+//if (!fs.existsSync("links.json"))
+fs.writeFileSync("links.json", '{"links":[]}');
 let linksFile = JSON.parse(fs.readFileSync("./links.json"));
 
 //START URL
-let startUrl = "https://marksism.space/";
+let startUrl = "https://inet.se/";
 
 main();
 
@@ -31,7 +31,7 @@ async function main() {
       if (tmp == linksFile.links.length) deadEnd = true;
     }
   }
-  if(deadEnd) console.log("DEADEND!!!")
+  if (deadEnd) console.log("DEADEND!!!");
 }
 
 //Fetches from link using node-fetch
@@ -40,7 +40,8 @@ async function fetchLink(url) {
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       controller.abort();
-    }, 10000);
+      reject();
+    }, 1000);
     console.log(url);
     fetch(url, { signal: controller.signal })
       .then((res) => res.text())
@@ -58,6 +59,7 @@ function writeToJson(obj) {
 }
 
 function checkIfExist(link) {
+  linksFile = JSON.parse(fs.readFileSync("./links.json"));
   let exists = false;
   linksFile.links.forEach((theLink) => {
     if (theLink.link == link) {
@@ -85,19 +87,24 @@ function addsOrUpdatesLink(url) {
 }
 
 async function addLinksFromURL(currentURL) {
-  console.log("plz dont spam");
-  let dom = new JSDOM(await fetchLink(currentURL));
-  let links = dom.window.document.links;
-  addsOrUpdatesLink(currentURL);
-  for (let i = 0; i < links.length; i++) {
-    if (links[i].href.startsWith("https")) {
-      if (!checkIfExist(links[i].href)) {
-        writeToJson({
-          link: links[i].href,
-          visited: false,
-        });
+  let dom;
+  try {
+    let htmlString = await fetchLink(currentURL);
+    dom = new JSDOM(htmlString);
+  } catch (error) {}
+  if (dom) {
+    let links = dom.window.document.links;
+    addsOrUpdatesLink(currentURL);
+    for (let i = 0; i < links.length; i++) {
+      if (links[i].href.startsWith("https")) {
+        if (!checkIfExist(links[i].href)) {
+          writeToJson({
+            link: links[i].href,
+            visited: false,
+          });
+        }
       }
+      linksFile = JSON.parse(fs.readFileSync("./links.json"));
     }
-    linksFile = JSON.parse(fs.readFileSync("./links.json"));
   }
 }
