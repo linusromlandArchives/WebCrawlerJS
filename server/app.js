@@ -5,18 +5,22 @@ const fs = require("fs");
 const AbortController = require("abort-controller");
 let deadEnd = false;
 
-//if (!fs.existsSync("links.json"))
-fs.writeFileSync("links.json", '{"links":[]}');
+if (!fs.existsSync("links.json")) {
+  fs.writeFileSync("links.json", '{"links":[]}');
+}
 let linksFile = JSON.parse(fs.readFileSync("./links.json"));
+let startLength = linksFile.links.length;
+
+let linksToCreate = startLength + 10000; // Not exact
 
 //START URL
-let startUrl = "https://inet.se/";
+let startUrl = "https://romland.space/";
 
 main();
 
 //Main function, needed async
 async function main() {
-  while (linksFile.links.length < 100 && !deadEnd) {
+  while (linksFile.links.length < linksToCreate && !deadEnd) {
     if (!linksFile.links[0]) {
       await addLinksFromURL(startUrl);
     } else {
@@ -27,8 +31,10 @@ async function main() {
         } else {
           tmp++;
         }
+        if (linksFile.links.length > linksToCreate) break;
       }
       if (tmp == linksFile.links.length) deadEnd = true;
+      if (linksFile.links.length > linksToCreate) break;
     }
   }
   if (deadEnd) console.log("DEADEND!!!");
