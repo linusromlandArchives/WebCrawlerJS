@@ -2,9 +2,7 @@ const fetch = require("node-fetch");
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const fs = require("fs");
-const AbortController = require('abort-controller');
-
-
+const AbortController = require("abort-controller");
 
 if (!fs.existsSync("links.json"))
   fs.writeFileSync("links.json", '{"links":[]}');
@@ -31,17 +29,29 @@ async function main() {
 }
 
 //Fetches from link using node-fetch
-async function fetchLink(link) {
-  const controller = new AbortController();
-  const timeout = setTimeout(
-    () => { controller.abort(); },
-    500,
-  );
-   
-  let tmp = await fetch(link, { signal: controller.signal });
-  clearTimeout(timeout);
-  console.log(tmp)
-  return await tmp.text();
+async function fetchLink(url) {
+  return new Promise((resolve, reject) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 150);
+
+    fetch(url, { signal: controller.signal })
+      .then((res) => res.text())
+      .then(
+        (data) => {
+          resolve(data);
+        },
+        (err) => {
+          if (err.name === "AbortError") {
+            reject();
+          }
+        }
+      )
+      .finally(() => {
+        clearTimeout(timeout);
+      });
+  });
 }
 
 function writeToJson(obj) {
