@@ -19,11 +19,11 @@ async function main() {
     if (!linksFile.links[0]) {
       await addLinksFromURL(startUrl);
     } else {
-      await linksFile.links.forEach(async (link) => {
-        if (!link.visited) {
-          await addLinksFromURL(link.link);
+      for (let i = 0; i < linksFile.links.length; i++) {
+        if (!linksFile.links[i].visited) {
+          await addLinksFromURL(linksFile.links[i])
         }
-      });
+      }
     }
   }
 }
@@ -88,6 +88,7 @@ function addsOrUpdatesLink(url) {
 }
 
 async function addLinksFromURL(currentURL) {
+  console.log("plz dont spam")
   let dom = new JSDOM(await fetchLink(currentURL));
   let links = dom.window.document.links;
   addsOrUpdatesLink(currentURL);
