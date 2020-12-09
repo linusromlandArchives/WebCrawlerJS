@@ -18,8 +18,8 @@ async function main() {
   let dom = new JSDOM(await fetchLink(currentURL));
   let links = dom.window.document.links;
 
-  addsOrUpdatesLink(currentURL)
-  
+  addsOrUpdatesLink(currentURL);
+
   for (let i = 0; i < links.length; i++) {
     if (links[i].href.startsWith("https")) {
       if (!checkIfExist(links[i].href)) {
@@ -55,8 +55,8 @@ function checkIfExist(link) {
   return exists;
 }
 
-function addsOrUpdatesLink(url){
-    let checkExist = checkIfExist(url);
+function addsOrUpdatesLink(url) {
+  let checkExist = checkIfExist(url);
   if (!checkExist) {
     writeToJson({
       link: url,
@@ -70,6 +70,4 @@ function addsOrUpdatesLink(url){
     fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
     linksFile = JSON.parse(fs.readFileSync("./links.json"));
   }
-
-
 }
