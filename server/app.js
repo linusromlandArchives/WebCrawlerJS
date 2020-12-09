@@ -9,14 +9,21 @@ if (!fs.existsSync("links.json")) {
   fs.writeFileSync("links.json", '{"links":[]}');
 }
 let linksFile = JSON.parse(fs.readFileSync("./links.json"));
-let startLength = linksFile.links.length;
 
-let linksToCreate = startLength + 10000; // Not exact
+let startLength = linksFile.links.length;
+let linksToCreate = startLength + 200;
+
+if(process.argv[2]){
+  linksToCreate = startLength + process.argv[2];
+  console.log("Creating " + process.argv[2] + " new links!")
+}
 
 //START URL
 let startUrl = "https://romland.space/";
 
-main();
+setTimeout(() => {
+  main();
+}, 3000);
 
 //Main function, needed async
 async function main() {
@@ -49,6 +56,7 @@ async function fetchLink(url) {
       reject();
     }, 1000);
     console.log(url);
+    console.log(linksFile.links.length);
     fetch(url, { signal: controller.signal })
       .then((res) => res.text())
       .then((body) => resolve(body))
@@ -77,9 +85,28 @@ function checkIfExist(link) {
 
 function addsOrUpdatesLink(url) {
   let checkExist = checkIfExist(url);
-  if (!checkExist) {
+  if (checkExist) {
+    linksFile = JSON.parse(fs.readFileSync("./links.json"));
+    let tmp = linksFile;
+    for (let i = 0; i < tmp.links.length; i++) {
+      if (tmp.links[i].link == url){
+        tmp.links[i].hits = tmp.links[i].hits + 1;
+        console.log(
+          "New HIT on: " +
+            tmp.links[i].link +
+            " with " +
+            tmp.links[i].hits +
+            " hits!"
+        );
+      } 
+      
+    }
+    fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
+    linksFile = JSON.parse(fs.readFileSync("./links.json"));
+  } else if (!checkExist) {
     writeToJson({
       link: url,
+      hits: 1,
       visited: true,
     });
   } else if (checkExist.visited == false) {
@@ -106,6 +133,7 @@ async function addLinksFromURL(currentURL) {
         if (!checkIfExist(links[i].href)) {
           writeToJson({
             link: links[i].href,
+            hits: 1,
             visited: false,
           });
         }
