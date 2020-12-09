@@ -10,7 +10,7 @@ if (!fs.existsSync("links.json"))
 let linksFile = JSON.parse(fs.readFileSync("./links.json"));
 
 //START URL
-let startUrl = "https://romland.space/";
+let startUrl = "https://marksism.space/";
 
 main();
 
@@ -31,7 +31,7 @@ async function main() {
       if (tmp == linksFile.links.length) deadEnd = true;
     }
   }
-  if(deadEnd) console.log("deadend")
+  if(deadEnd) console.log("DEADEND!!!")
 }
 
 //Fetches from link using node-fetch
