@@ -11,7 +11,7 @@ if (!fs.existsSync("links.json"))
 let linksFile = JSON.parse(fs.readFileSync("./links.json"));
 
 //START URL
-let startUrl = "https://www.inet.se/";
+let startUrl = "https://www.romland.space/";
 
 main();
 
