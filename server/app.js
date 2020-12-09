@@ -9,14 +9,17 @@ if (!fs.existsSync("links.json"))
 let linksFile = JSON.parse(fs.readFileSync("./links.json"));
 
 //START URL
-const startURL = "https://www.romland.space/";
+let currentURL = "https://www.romland.space/";
 
 main();
 
 //Main function, needed async
 async function main() {
-  let dom = new JSDOM(await fetchLink(startURL));
+  let dom = new JSDOM(await fetchLink(currentURL));
   let links = dom.window.document.links;
+
+  addsOrUpdatesLink(currentURL)
+  
   for (let i = 0; i < links.length; i++) {
     if (links[i].href.startsWith("https")) {
       if (!checkIfExist(links[i].href)) {
@@ -46,8 +49,27 @@ function checkIfExist(link) {
   let exists = false;
   linksFile.links.forEach((theLink) => {
     if (theLink.link == link) {
-      exists = true;
+      exists = theLink;
     }
   });
   return exists;
+}
+
+function addsOrUpdatesLink(url){
+    let checkExist = checkIfExist(url);
+  if (!checkExist) {
+    writeToJson({
+      link: url,
+      visited: true,
+    });
+  } else if (checkExist.visited == false) {
+    let tmp = linksFile;
+    for (let i = 0; i < tmp.links.length; i++) {
+      if (tmp.links[i].link == url) tmp.links[i].visited = true;
+    }
+    fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
+    linksFile = JSON.parse(fs.readFileSync("./links.json"));
+  }
+
+
 }
