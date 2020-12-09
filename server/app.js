@@ -3,33 +3,27 @@ const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const fs = require("fs");
 const AbortController = require("abort-controller");
-let deadEnd = false;
 
 if (!fs.existsSync("links.json"))
   fs.writeFileSync("links.json", '{"links":[]}');
 let linksFile = JSON.parse(fs.readFileSync("./links.json"));
 
 //START URL
-let startUrl = "https://marksism.space/";
+let startUrl = "https://romland.space/";
 
 main();
 
 //Main function, needed async
 async function main() {
-  while (linksFile.links.length < 100 && !deadEnd) {
+  while (linksFile.links.length < 100) {
     if (!linksFile.links[0]) {
       await addLinksFromURL(startUrl);
     } else {
-      let tmp = 0;
       for (let i = 0; i < linksFile.links.length; i++) {
         if (!linksFile.links[i].visited) {
-          console.log(linksFile.links[i].link);
           await addLinksFromURL(linksFile.links[i].link);
-        } else {
-          tmp++;
         }
       }
-      if (tmp == linksFile.links.length) deadEnd = true;
     }
   }
 }
@@ -40,19 +34,11 @@ async function fetchLink(url) {
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       controller.abort();
-    }, 2000);
+    }, 10000);
+    console.log(url)
     fetch(url, { signal: controller.signal })
-      .then(async (res) => {
-        let contentType = res.headers.get("content-type");
-        if (contentType && !contentType.startsWith("text/html")){
-          reject("");
-        }else{
-         res.text();          
-        }
-      })
-      .then((body) => {
-        resolve(body)
-      })
+      .then((res) => res.text())
+      .then((body) => resolve(body))
       .finally(() => {
         clearTimeout(timeout);
       });
@@ -67,7 +53,6 @@ function writeToJson(obj) {
 
 function checkIfExist(link) {
   let exists = false;
-  linksFile = JSON.parse(fs.readFileSync("./links.json"));
   linksFile.links.forEach((theLink) => {
     if (theLink.link == link) {
       exists = theLink;
@@ -94,25 +79,19 @@ function addsOrUpdatesLink(url) {
 }
 
 async function addLinksFromURL(currentURL) {
-  let dom;
-  try {
-    let tmp = await fetchLink(currentURL)
-    console.log(await tmp + " haha: " + currentURL)
-    dom = new JSDOM(await tmp);
-  } catch (error) {}
-  if (dom) {
-    let links = dom.window.document.links;
-    addsOrUpdatesLink(currentURL);
-    for (let i = 0; i < links.length; i++) {
-      if (links[i].href.startsWith("https")) {
-        if (!checkIfExist(links[i].href)) {
-          writeToJson({
-            link: links[i].href,
-            visited: false,
-          });
-        }
+  console.log("plz dont spam");
+  let dom = new JSDOM(await fetchLink(currentURL));
+  let links = dom.window.document.links;
+  addsOrUpdatesLink(currentURL);
+  for (let i = 0; i < links.length; i++) {
+    if (links[i].href.startsWith("https")) {
+      if (!checkIfExist(links[i].href)) {
+        writeToJson({
+          link: links[i].href,
+          visited: false,
+        });
       }
-      linksFile = JSON.parse(fs.readFileSync("./links.json"));
     }
+    linksFile = JSON.parse(fs.readFileSync("./links.json"));
   }
 }
