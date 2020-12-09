@@ -9,19 +9,19 @@ if (!fs.existsSync("links.json"))
 let linksFile = JSON.parse(fs.readFileSync("./links.json"));
 
 //START URL
-let startUrl = "https://www.romland.space/";
+let startUrl = "https://romland.space/";
 
 main();
 
 //Main function, needed async
 async function main() {
-  while (linksFile.links.length < 1000) {
+  while (linksFile.links.length < 100) {
     if (!linksFile.links[0]) {
       await addLinksFromURL(startUrl);
     } else {
       for (let i = 0; i < linksFile.links.length; i++) {
         if (!linksFile.links[i].visited) {
-          await addLinksFromURL(linksFile.links[i])
+          await addLinksFromURL(linksFile.links[i].link);
         }
       }
     }
@@ -34,20 +34,11 @@ async function fetchLink(url) {
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       controller.abort();
-    }, 150);
-
+    }, 10000);
+    console.log(url)
     fetch(url, { signal: controller.signal })
       .then((res) => res.text())
-      .then(
-        (data) => {
-          resolve(data);
-        },
-        (err) => {
-          if (err.name === "AbortError") {
-            reject();
-          }
-        }
-      )
+      .then((body) => resolve(body))
       .finally(() => {
         clearTimeout(timeout);
       });
@@ -88,7 +79,7 @@ function addsOrUpdatesLink(url) {
 }
 
 async function addLinksFromURL(currentURL) {
-  console.log("plz dont spam")
+  console.log("plz dont spam");
   let dom = new JSDOM(await fetchLink(currentURL));
   let links = dom.window.document.links;
   addsOrUpdatesLink(currentURL);
