@@ -3,6 +3,7 @@ const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const fs = require("fs");
 const AbortController = require("abort-controller");
+let deadEnd = false;
 
 if (!fs.existsSync("links.json"))
   fs.writeFileSync("links.json", '{"links":[]}');
@@ -15,17 +16,22 @@ main();
 
 //Main function, needed async
 async function main() {
-  while (linksFile.links.length < 100) {
+  while (linksFile.links.length < 100 && !deadEnd) {
     if (!linksFile.links[0]) {
       await addLinksFromURL(startUrl);
     } else {
+      let tmp = 0;
       for (let i = 0; i < linksFile.links.length; i++) {
         if (!linksFile.links[i].visited) {
           await addLinksFromURL(linksFile.links[i].link);
+        } else {
+          tmp++;
         }
       }
+      if (tmp == linksFile.links.length) deadEnd = true;
     }
   }
+  if(deadEnd) console.log("deadend")
 }
 
 //Fetches from link using node-fetch
@@ -35,7 +41,7 @@ async function fetchLink(url) {
     const timeout = setTimeout(() => {
       controller.abort();
     }, 10000);
-    console.log(url)
+    console.log(url);
     fetch(url, { signal: controller.signal })
       .then((res) => res.text())
       .then((body) => resolve(body))
