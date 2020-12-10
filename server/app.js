@@ -19,7 +19,7 @@ if (process.argv[2]) {
 }
 
 //START URL
-let startUrl = "https://romland.space/";
+let startUrl = "https://en.wikipedia.org/wiki/Linus";
 
 if (process.argv[3]) {
   startUrl = process.argv[3];
@@ -41,6 +41,7 @@ async function main() {
       for (let i = 0; i < linksFile.links.length; i++) {
         if (!linksFile.links[i].visited) {
           await addLinksFromURL(linksFile.links[i].link);
+          break;
         } else {
           tmp++;
         }
@@ -61,8 +62,6 @@ async function fetchLink(url) {
       controller.abort();
       reject();
     }, 1000);
-    console.log(url);
-    console.log(linksFile.links.length);
     fetch(url, { signal: controller.signal })
       .then((res) => res.text())
       .then((body) => resolve(body))
@@ -82,11 +81,13 @@ function writeToJson(obj) {
 function checkIfExist(link) {
   linksFile = JSON.parse(fs.readFileSync("./links.json"));
   let exists = false;
-  linksFile.links.forEach((theLink) => {
-    if (theLink.link == link) {
-      exists = theLink;
+
+  for (let i = 0; i < linksFile.links.length; i++) {
+    if (linksFile.links[i].link == link) {
+      exists = linksFile.links[i];
+      break;
     }
-  });
+  }
   return exists;
 }
 
@@ -98,18 +99,22 @@ function addsOrUpdatesLink(url) {
     for (let i = 0; i < tmp.links.length; i++) {
       if (tmp.links[i].link == url) {
         tmp.links[i].hits = tmp.links[i].hits + 1;
-        console.log(
-          "New HIT on: " +
-            tmp.links[i].link +
-            " with " +
-            tmp.links[i].hits +
-            " hits!"
-        );
+
+        if (tmp.links[i].hits == 3) {
+          console.log(
+            "New hit on: " +
+              tmp.links[i].link +
+              " with " +
+              tmp.links[i].hits +
+              " hits!"
+          );
+        }
       }
     }
     fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
     linksFile = JSON.parse(fs.readFileSync("./links.json"));
-  } else if (!checkExist) {
+  }
+  if (!checkExist) {
     writeToJson({
       link: url,
       hits: 1,
@@ -119,8 +124,8 @@ function addsOrUpdatesLink(url) {
     let tmp = linksFile;
     for (let i = 0; i < tmp.links.length; i++) {
       if (tmp.links[i].link == url) {
-        console.log("Changed to exists");
         tmp.links[i].visited = true;
+        break;
       }
     }
     fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
@@ -140,6 +145,11 @@ async function addLinksFromURL(currentURL) {
     for (let i = 0; i < links.length; i++) {
       if (links[i].href.startsWith("https")) {
         if (!checkIfExist(links[i].href)) {
+          console.log(
+            "\x1b[33m%s\x1b[0m",
+            `[No of Links: ${linksFile.links.length}]`,
+            `- Latest link: ${links[i].href}`
+          );
           writeToJson({
             link: links[i].href,
             hits: 1,
