@@ -114,10 +114,8 @@ async function addLinksFromURL(currentURL) {
     addsOrUpdatesLink(currentURL);
     for (let i = 0; i < links.length; i++) {
       if (links[i].href.startsWith("https")) {
-        //console.log(links[i].href)
         let temp = await checkIfExist(links[i].href);
         if (!temp) {
-          console.log(!!temp)
           console.log(
             "\x1b[33m%s\x1b[0m",
             `[No of Links: ${await dBModule.getLength(Link)}]`,
