@@ -3,15 +3,13 @@ const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const fs = require("fs");
 const dBModule = require("./dbModule.js");
+const Link = require("./models/link.js");
 const AbortController = require("abort-controller");
 let deadEnd = false;
 
-if (!fs.existsSync("links.json")) {
-  fs.writeFileSync("links.json", '{"links":[]}');
-}
 let linksFile = JSON.parse(fs.readFileSync("./links.json"));
 
-let startLength = linksFile.links.length;
+let startLength = dBModule.findInDB(Link).length;
 let linksToCreate = startLength + 200;
 
 if (process.argv[2]) {
@@ -33,29 +31,27 @@ console.log("Starting at " + startUrl);
 
 setTimeout(() => {
   main();
-}, 3000);
+}, 0);
 
 //Main function, needed async
 async function main() {
-  while (linksFile.links.length < linksToCreate && !deadEnd) {
-    if (!linksFile.links[0]) {
+  let deadEnd = false;
+  while (
+    (!(await dBModule.findInDB(Link).length) ||
+      (await dBModule.findInDB(Link).length) < linksToCreate) &&
+    !deadEnd
+  ) {
+    if (!(await dBModule.findInDBOne(Link))) {
       await addLinksFromURL(startUrl);
     } else {
-      let tmp = 0;
-      for (let i = 0; i < linksFile.links.length; i++) {
-        if (!linksFile.links[i].visited) {
-          await addLinksFromURL(linksFile.links[i].link);
-          break;
-        } else {
-          tmp++;
-        }
-        if (linksFile.links.length > linksToCreate) break;
-      }
-      if (tmp == linksFile.links.length) deadEnd = true;
-      if (linksFile.links.length > linksToCreate) break;
+      let tmp = await dBModule.getUnvisited(Link);
+      await addLinksFromURL(tmp.link);
+    }
+    if (!(await dBModule.getUnvisited(Link))) {
+      deadEnd = true;
+      console.log("Dead End!!!");
     }
   }
-  if (deadEnd) console.log("Dead End!!!");
 }
 
 //Fetches from link using node-fetch
@@ -76,31 +72,16 @@ async function fetchLink(url) {
   });
 }
 
-function writeToJson(obj) {
-  let tmp = JSON.parse(fs.readFileSync("./links.json"));
-  tmp.links.push(obj);
-  fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
+async function checkIfExist(theLink) {
+  return await dBModule.searchInDBOne(Link, theLink);
 }
 
-function checkIfExist(link) {
-  linksFile = JSON.parse(fs.readFileSync("./links.json"));
-  let exists = false;
-
-  for (let i = 0; i < linksFile.links.length; i++) {
-    if (linksFile.links[i].link == link) {
-      exists = linksFile.links[i];
-      break;
-    }
-  }
-  return exists;
-}
-
-function addsOrUpdatesLink(url) {
-  let checkExist = checkIfExist(url);
+async function addsOrUpdatesLink(url) {
+  let checkExist = await checkIfExist(url);
   if (checkExist) {
-    linksFile = JSON.parse(fs.readFileSync("./links.json"));
+    /*linksFile = JSON.parse(fs.readFileSync("./links.json"));
     let tmp = linksFile;
-    for (let i = 0; i < tmp.links.length; i++) {
+    for (let i = 0; i < tmp.links.length; i++) {  HITS HERERHEIOREHEKRNFHSDAJKFHUDSHFKJFDSHJKFHKJF
       if (tmp.links[i].link == url) {
         tmp.links[i].hits = tmp.links[i].hits + 1;
 
@@ -116,24 +97,12 @@ function addsOrUpdatesLink(url) {
       }
     }
     fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
-    linksFile = JSON.parse(fs.readFileSync("./links.json"));
+    linksFile = JSON.parse(fs.readFileSync("./links.json"));*/
   }
   if (!checkExist) {
-    writeToJson({
-      link: url,
-      hits: 1,
-      visited: true,
-    });
+    createLink(url);
   } else if (checkExist.visited == false) {
-    let tmp = linksFile;
-    for (let i = 0; i < tmp.links.length; i++) {
-      if (tmp.links[i].link == url) {
-        tmp.links[i].visited = true;
-        break;
-      }
-    }
-    fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
-    linksFile = JSON.parse(fs.readFileSync("./links.json"));
+    dBModule.visit(Link, checkExist.link);
   }
 }
 
@@ -148,28 +117,33 @@ async function addLinksFromURL(currentURL) {
     addsOrUpdatesLink(currentURL);
     for (let i = 0; i < links.length; i++) {
       if (links[i].href.startsWith("https")) {
-        if (!checkIfExist(links[i].href)) {
+        //console.log(links[i].href)
+        let temp = await checkIfExist(links[i].href);
+        if (!temp) {
+          console.log(!!temp)
           console.log(
             "\x1b[33m%s\x1b[0m",
-            `[No of Links: ${linksFile.links.length}]`,
+            `[No of Links: ${await dBModule.getLength(Link)}]`,
             `- Latest link: ${links[i].href}`
           );
-          writeToJson({
-            link: links[i].href,
-            hits: 1,
-            visited: false,
-          });
+          createLink(links[i].href);
         }
       }
-      linksFile = JSON.parse(fs.readFileSync("./links.json"));
     }
   }
 }
 function connectToMongo(dbName) {
   if (fs.existsSync("mongoauth.json")) {
     dBModule.cnctDBAuth(dbName);
-
   } else {
     dBModule.cnctDB(dbName);
   }
+}
+
+function createLink(link) {
+  dBModule.saveToDB(
+    new Link({
+      link: link,
+    })
+  );
 }
