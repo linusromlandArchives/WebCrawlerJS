@@ -6,20 +6,10 @@ const dBModule = require("./dbModule.js");
 const Link = require("./models/link.js");
 const AbortController = require("abort-controller");
 
-let startLength = dBModule.findInDB(Link).length;
-let linksToCreate = startLength + 200;
-
-if (process.argv[2]) {
-  linksToCreate = startLength + process.argv[2];
-  console.log("Creating " + process.argv[2] + " new links!");
-}
-
-//START URL
+//Setting config varibles
 let startUrl = "https://en.wikipedia.org/wiki/Linus";
-
-if (process.argv[3]) {
-  startUrl = process.argv[3];
-}
+let linksToCreate;
+setConfigVaribles()
 
 //Connect to MongoDB
 connectToMongo("WebCrawler");
@@ -141,4 +131,19 @@ function createLink(link) {
       link: link,
     })
   );
+}
+
+async function setConfigVaribles(){
+  let startLength = await dBModule.getLength(Link);
+ linksToCreate = startLength + 200;
+
+if (process.argv[2]) {
+  linksToCreate = startLength + process.argv[2];
+  console.log("Creating " + process.argv[2] + " new links!");
+  console.log("That will make the total " + linksToCreate)
+}
+
+if (process.argv[3]) {
+  startUrl = process.argv[3];
+}
 }
