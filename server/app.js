@@ -44,7 +44,7 @@ async function main() {
       if (linksFile.links.length > linksToCreate) break;
     }
   }
-  if (deadEnd) console.log("DEADEND!!!");
+  if (deadEnd) console.log("Dead End!!!");
 }
 
 //Fetches from link using node-fetch
