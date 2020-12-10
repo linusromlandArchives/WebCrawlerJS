@@ -5,9 +5,6 @@ const fs = require("fs");
 const dBModule = require("./dbModule.js");
 const Link = require("./models/link.js");
 const AbortController = require("abort-controller");
-let deadEnd = false;
-
-let linksFile = JSON.parse(fs.readFileSync("./links.json"));
 
 let startLength = dBModule.findInDB(Link).length;
 let linksToCreate = startLength + 200;
