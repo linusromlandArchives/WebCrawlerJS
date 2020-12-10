@@ -21,6 +21,12 @@ if (process.argv[2]) {
 //START URL
 let startUrl = "https://romland.space/";
 
+if (process.argv[3]) {
+  startUrl = process.argv[3];
+}
+
+console.log("Starting at " + startUrl);
+
 setTimeout(() => {
   main();
 }, 3000);
