@@ -31,7 +31,7 @@ console.log("Starting at " + startUrl);
 
 setTimeout(() => {
   main();
-}, 0);
+}, 1);
 
 //Main function, needed async
 async function main() {
