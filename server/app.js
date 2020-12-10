@@ -118,7 +118,10 @@ function addsOrUpdatesLink(url) {
   } else if (checkExist.visited == false) {
     let tmp = linksFile;
     for (let i = 0; i < tmp.links.length; i++) {
-      if (tmp.links[i].link == url) tmp.links[i].visited = true;
+      if (tmp.links[i].link == url) {
+        console.log("Changed to exists");
+        tmp.links[i].visited = true;
+      }
     }
     fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
     linksFile = JSON.parse(fs.readFileSync("./links.json"));
