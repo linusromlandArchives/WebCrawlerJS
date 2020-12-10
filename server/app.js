@@ -3,7 +3,6 @@ const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const fs = require("fs");
 const AbortController = require("abort-controller");
-const dBModule = require("./dbModule.js");
 let deadEnd = false;
 
 if (!fs.existsSync("links.json")) {
@@ -21,9 +20,6 @@ if (process.argv[2]) {
 
 //START URL
 let startUrl = "https://en.wikipedia.org/wiki/Linus";
-
-//Connect to MongoDB
-connectToMongo("WebCrawler");
 
 if (process.argv[3]) {
   startUrl = process.argv[3];
@@ -163,13 +159,5 @@ async function addLinksFromURL(currentURL) {
       }
       linksFile = JSON.parse(fs.readFileSync("./links.json"));
     }
-  }
-}
-
-function connectToMongo(dbName) {
-  if (fs.existsSync("mongoauth.json")) {
-    dBModule.cnctDBAuth(dbName);
-  } else {
-    dBModule.cnctDB(dbName);
   }
 }
