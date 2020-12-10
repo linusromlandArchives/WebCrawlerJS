@@ -2,6 +2,7 @@ const fetch = require("node-fetch");
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const fs = require("fs");
+const dBModule = require("./dbModule.js");
 const AbortController = require("abort-controller");
 let deadEnd = false;
 
@@ -24,6 +25,9 @@ let startUrl = "https://en.wikipedia.org/wiki/Linus";
 if (process.argv[3]) {
   startUrl = process.argv[3];
 }
+
+//Connect to MongoDB
+connectToMongo("WebCrawler");
 
 console.log("Starting at " + startUrl);
 
@@ -159,5 +163,13 @@ async function addLinksFromURL(currentURL) {
       }
       linksFile = JSON.parse(fs.readFileSync("./links.json"));
     }
+  }
+}
+function connectToMongo(dbName) {
+  if (fs.existsSync("mongoauth.json")) {
+    dBModule.cnctDBAuth(dbName);
+
+  } else {
+    dBModule.cnctDB(dbName);
   }
 }
