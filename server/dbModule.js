@@ -39,7 +39,7 @@ exports.findInDBOne = async (Model) => {
 };
 
 exports.searchInDBOne = async (Model, link) => {
-  return await Model.findOne({link: link});
+  return await Model.findOne({link: {$regex: "(?:^|\W)" + link + "(?:$|\W)"}});
 };
 
 exports.findInDB = async (Model) => {
