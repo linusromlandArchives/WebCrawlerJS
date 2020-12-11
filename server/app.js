@@ -125,12 +125,16 @@ function connectToMongo(dbName) {
   }
 }
 
-function createLink(link) {
-  dBModule.saveToDB(
-    new Link({
-      link: link,
-    })
-  );
+async function createLink(link) {
+  let temp = await checkIfExist(link);
+  if(!temp) {
+    dBModule.saveToDB(
+      new Link({
+        link: link,
+      })
+    );
+  }
+  
 }
 
 async function setConfigVaribles() {
