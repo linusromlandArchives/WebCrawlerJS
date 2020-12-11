@@ -7,7 +7,7 @@ const Link = require("./models/link.js");
 const AbortController = require("abort-controller");
 
 //Setting config varibles
-let startUrl = "https://en.wikipedia.org/wiki/Linus";
+let startUrl = "https://romland.space";
 let linksToCreate;
 setConfigVaribles();
 
@@ -23,6 +23,7 @@ setTimeout(() => {
 //Main function, needed async
 async function main() {
   let deadEnd = false;
+  let oldLink = "";
   while (
     (!(await dBModule.findInDB(Link).length) ||
       (await dBModule.findInDB(Link).length) < linksToCreate) &&
@@ -33,6 +34,12 @@ async function main() {
     } else {
       let tmp = await dBModule.getUnvisited(Link);
       await addLinksFromURL(tmp.link);
+
+      if (oldLink == tmp.link) {
+        dBModule.removeLonk(Link, tmp.link);
+      } else {
+        oldLink = tmp.link;
+      }
     }
     if (!(await dBModule.getUnvisited(Link))) {
       deadEnd = true;
@@ -66,25 +73,7 @@ async function checkIfExist(theLink) {
 async function addsOrUpdatesLink(url) {
   let checkExist = await checkIfExist(url);
   if (checkExist) {
-    /*linksFile = JSON.parse(fs.readFileSync("./links.json"));
-    let tmp = linksFile;
-    for (let i = 0; i < tmp.links.length; i++) {  HITS HERERHEIOREHEKRNFHSDAJKFHUDSHFKJFDSHJKFHKJF
-      if (tmp.links[i].link == url) {
-        tmp.links[i].hits = tmp.links[i].hits + 1;
-
-        if (tmp.links[i].hits == 3) {
-          console.log(
-            "New hit on: " +
-              tmp.links[i].link +
-              " with " +
-              tmp.links[i].hits +
-              " hits!"
-          );
-        }
-      }
-    }
-    fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
-    linksFile = JSON.parse(fs.readFileSync("./links.json"));*/
+    dBModule.hit(Link, url);
   }
   if (!checkExist) {
     createLink(url);
@@ -127,14 +116,13 @@ function connectToMongo(dbName) {
 
 async function createLink(link) {
   let temp = await checkIfExist(link);
-  if(!temp) {
+  if (!temp) {
     dBModule.saveToDB(
       new Link({
         link: link,
       })
     );
   }
-  
 }
 
 async function setConfigVaribles() {

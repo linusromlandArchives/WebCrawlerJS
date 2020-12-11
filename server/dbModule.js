@@ -63,3 +63,12 @@ exports.getLength = async (Model) => {
 exports.visit = async (Model, link) => {
   await Model.updateOne({ link: link }, { $set: { visited: true } });
 };
+
+exports.hit = async (Model, link) => {
+  await Model.updateOne({ link: link }, { $inc: { hits: 1 } });
+}
+
+exports.removeLonk = async (Model, link) => {
+  console.error("Deleted link " + link)
+  await Model.deleteMany({ link: link });
+}
