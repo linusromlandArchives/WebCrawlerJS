@@ -2,56 +2,53 @@ const fetch = require("node-fetch");
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const fs = require("fs");
+const dBModule = require("./dbModule.js");
+const Link = require("./models/link.js");
 const AbortController = require("abort-controller");
-let deadEnd = false;
 
-if (!fs.existsSync("links.json")) {
-  fs.writeFileSync("links.json", '{"links":[]}');
-}
-let linksFile = JSON.parse(fs.readFileSync("./links.json"));
+//Setting config varibles
+let startUrl = "https://romland.space";
+let linksToCreate = 0;
+setConfigVaribles();
 
-let startLength = linksFile.links.length;
-let linksToCreate = startLength + 200;
-
-if (process.argv[2]) {
-  linksToCreate = startLength + process.argv[2];
-  console.log("Creating " + process.argv[2] + " new links!");
-}
-
-//START URL
-let startUrl = "https://en.wikipedia.org/wiki/Linus";
-
-if (process.argv[3]) {
-  startUrl = process.argv[3];
-}
+//Connect to MongoDB
+connectToMongo("WebCrawler");
 
 console.log("Starting at " + startUrl);
 
 setTimeout(() => {
   main();
-}, 3000);
+}, 1);
 
 //Main function, needed async
 async function main() {
-  while (linksFile.links.length < linksToCreate && !deadEnd) {
-    if (!linksFile.links[0]) {
+  let deadEnd = false;
+  let oldLink = "";
+  while (
+    (!(await dBModule.findInDB(Link).length) ||
+      (await dBModule.findInDB(Link).length) < linksToCreate) &&
+    !deadEnd
+  ) {
+    if (!(await dBModule.findInDBOne(Link))) {
       await addLinksFromURL(startUrl);
     } else {
-      let tmp = 0;
-      for (let i = 0; i < linksFile.links.length; i++) {
-        if (!linksFile.links[i].visited) {
-          await addLinksFromURL(linksFile.links[i].link);
-          break;
-        } else {
-          tmp++;
-        }
-        if (linksFile.links.length > linksToCreate) break;
+      let tmp = await dBModule.getUnvisited(Link);
+      await addLinksFromURL(tmp.link);
+
+      if (oldLink == tmp.link) {
+        dBModule.removeLonk(Link, tmp.link);
+      } else {
+        oldLink = tmp.link;
       }
-      if (tmp == linksFile.links.length) deadEnd = true;
-      if (linksFile.links.length > linksToCreate) break;
+    }
+    if (!(await dBModule.getUnvisited(Link))) {
+      deadEnd = true;
+      console.log("Dead End!!!");
+      process.exit(1);
     }
   }
-  if (deadEnd) console.log("Dead End!!!");
+
+  process.exit(1);
 }
 
 //Fetches from link using node-fetch
@@ -72,64 +69,19 @@ async function fetchLink(url) {
   });
 }
 
-function writeToJson(obj) {
-  let tmp = JSON.parse(fs.readFileSync("./links.json"));
-  tmp.links.push(obj);
-  fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
+async function checkIfExist(theLink) {
+  return await dBModule.searchInDBOne(Link, theLink);
 }
 
-function checkIfExist(link) {
-  linksFile = JSON.parse(fs.readFileSync("./links.json"));
-  let exists = false;
-
-  for (let i = 0; i < linksFile.links.length; i++) {
-    if (linksFile.links[i].link == link) {
-      exists = linksFile.links[i];
-      break;
-    }
-  }
-  return exists;
-}
-
-function addsOrUpdatesLink(url) {
-  let checkExist = checkIfExist(url);
+async function addsOrUpdatesLink(url) {
+  let checkExist = await checkIfExist(url);
   if (checkExist) {
-    linksFile = JSON.parse(fs.readFileSync("./links.json"));
-    let tmp = linksFile;
-    for (let i = 0; i < tmp.links.length; i++) {
-      if (tmp.links[i].link == url) {
-        tmp.links[i].hits = tmp.links[i].hits + 1;
-
-        if (tmp.links[i].hits == 3) {
-          console.log(
-            "New hit on: " +
-              tmp.links[i].link +
-              " with " +
-              tmp.links[i].hits +
-              " hits!"
-          );
-        }
-      }
-    }
-    fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
-    linksFile = JSON.parse(fs.readFileSync("./links.json"));
+    dBModule.hit(Link, url);
   }
   if (!checkExist) {
-    writeToJson({
-      link: url,
-      hits: 1,
-      visited: true,
-    });
+    createLink(url);
   } else if (checkExist.visited == false) {
-    let tmp = linksFile;
-    for (let i = 0; i < tmp.links.length; i++) {
-      if (tmp.links[i].link == url) {
-        tmp.links[i].visited = true;
-        break;
-      }
-    }
-    fs.writeFileSync("links.json", JSON.stringify(tmp), "utf8");
-    linksFile = JSON.parse(fs.readFileSync("./links.json"));
+    dBModule.visit(Link, checkExist.link);
   }
 }
 
@@ -144,20 +96,49 @@ async function addLinksFromURL(currentURL) {
     addsOrUpdatesLink(currentURL);
     for (let i = 0; i < links.length; i++) {
       if (links[i].href.startsWith("https")) {
-        if (!checkIfExist(links[i].href)) {
+        let temp = await checkIfExist(links[i].href);
+        if (!temp) {
           console.log(
             "\x1b[33m%s\x1b[0m",
-            `[No of Links: ${linksFile.links.length}]`,
+            `[No of Links: ${await dBModule.getLength(Link)}]`,
             `- Latest link: ${links[i].href}`
           );
-          writeToJson({
-            link: links[i].href,
-            hits: 1,
-            visited: false,
-          });
+          createLink(links[i].href);
         }
       }
-      linksFile = JSON.parse(fs.readFileSync("./links.json"));
     }
+  }
+}
+function connectToMongo(dbName) {
+  if (fs.existsSync("mongoauth.json")) {
+    dBModule.cnctDBAuth(dbName);
+  } else {
+    dBModule.cnctDB(dbName);
+  }
+}
+
+async function createLink(link) {
+  let temp = await checkIfExist(link);
+  if (!temp) {
+    dBModule.saveToDB(
+      new Link({
+        link: link,
+      })
+    );
+  }
+}
+
+async function setConfigVaribles() {
+  let startLength = parseInt(await dBModule.getLength(Link));
+  linksToCreate = startLength + 200;
+
+  if (process.argv[2] && Number.isInteger(parseInt(process.argv[2])) ) {
+    linksToCreate = startLength + parseInt(process.argv[2]);
+    console.log("Creating " + process.argv[2] + " new links!");
+    console.log("That will make the total " + linksToCreate);
+  }
+
+  if (process.argv[3]) {
+    startUrl = process.argv[3];
   }
 }
