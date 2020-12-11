@@ -8,7 +8,7 @@ const AbortController = require("abort-controller");
 
 //Setting config varibles
 let startUrl = "https://romland.space";
-let linksToCreate;
+let linksToCreate = 0;
 setConfigVaribles();
 
 //Connect to MongoDB
@@ -44,8 +44,11 @@ async function main() {
     if (!(await dBModule.getUnvisited(Link))) {
       deadEnd = true;
       console.log("Dead End!!!");
+      process.exit(1);
     }
   }
+
+  process.exit(1);
 }
 
 //Fetches from link using node-fetch
@@ -126,11 +129,11 @@ async function createLink(link) {
 }
 
 async function setConfigVaribles() {
-  let startLength = await dBModule.getLength(Link);
+  let startLength = parseInt(await dBModule.getLength(Link));
   linksToCreate = startLength + 200;
 
-  if (process.argv[2]) {
-    linksToCreate = startLength + process.argv[2];
+  if (process.argv[2] && Number.isInteger(parseInt(process.argv[2])) ) {
+    linksToCreate = startLength + parseInt(process.argv[2]);
     console.log("Creating " + process.argv[2] + " new links!");
     console.log("That will make the total " + linksToCreate);
   }
