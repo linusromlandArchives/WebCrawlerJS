@@ -5,10 +5,12 @@ const fs = require("fs");
 const dBModule = require("./dbModule.js");
 const Link = require("./models/link.js");
 const AbortController = require("abort-controller");
+const { db } = require("./models/link.js");
 
 //Setting config varibles
 let startUrl = "https://romland.space";
 let linksToCreate = 0;
+let length = 0;
 setConfigVaribles();
 
 //Connect to MongoDB
@@ -36,6 +38,7 @@ async function main() {
       await addLinksFromURL(tmp.link);
 
       if (oldLink == tmp.link) {
+        length--;
         dBModule.removeLonk(Link, tmp.link);
       } else {
         oldLink = tmp.link;
@@ -98,9 +101,10 @@ async function addLinksFromURL(currentURL) {
       if (links[i].href.startsWith("https")) {
         let temp = await checkIfExist(links[i].href);
         if (!temp) {
+          length++;
           console.log(
             "\x1b[33m%s\x1b[0m",
-            `[No of Links: ${await dBModule.getLength(Link)}]`,
+            `[No of Links: ${length}]`,
             `- Latest link: ${links[i].href}`
           );
           createLink(links[i].href);
@@ -131,6 +135,7 @@ async function createLink(link) {
 async function setConfigVaribles() {
   let startLength = parseInt(await dBModule.getLength(Link));
   linksToCreate = startLength + 200;
+  length += await dBModule.getLength(Link);
 
   if (process.argv[2] && Number.isInteger(parseInt(process.argv[2])) ) {
     linksToCreate = startLength + parseInt(process.argv[2]);
