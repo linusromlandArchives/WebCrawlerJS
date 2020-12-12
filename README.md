@@ -12,9 +12,9 @@ WebCrawler starts up and by default connects to MongoDB on 127.0.0.1 (localhost)
 The **WebCrawler** is very easy to use. 
 
 You need to have NodeJS, npm and MongoDB installed on your system.
-https://nodejs.org/en/download/
-https://www.npmjs.com/get-npm
-https://www.mongodb.com/try/download/community?tck=docs_server
+<br> https://nodejs.org/en/download/ 
+<br> https://www.npmjs.com/get-npm
+<br> https://www.mongodb.com/try/download/community?tck=docs_server
 
 You download the project by git clone or downloading the zip. 
 Then you go to the server folder and run:
