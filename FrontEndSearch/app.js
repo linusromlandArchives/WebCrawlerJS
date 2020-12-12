@@ -3,20 +3,21 @@ const dBModule = require("../server/dbModule.js");
 const fs = require("fs");
 const express = require("express");
 const app = express();
-const port = 3000;
+const port = 9588;
 
 //Connect to MongoDB
 connectToMongo("WebCrawler");
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.sendFile(__dirname + "/index.html");
 });
 
-app.get("/search", async (req, res) => {
-  console.log(req.query.search);
-  let tmp = await dBModule.searchInDB(Link, req.query.search);
+app.get("/js", (req, res) => {
+    res.sendFile(__dirname + "/main.js");
+  });
 
-  console.log(tmp);
+app.get("/search", async (req, res) => {
+  let tmp = await dBModule.searchInDB(Link, req.query.search);
   res.json(tmp);
 });
 
