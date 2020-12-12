@@ -14,7 +14,7 @@ app.get("/", (req, res) => {
 
 app.get("/search", async (req, res) => {
   console.log(req.query.search);
-  let tmp = await dBModule.findInDB(Link);
+  let tmp = await dBModule.searchInDB(Link, req.query.search);
 
   console.log(tmp);
   res.json(tmp);

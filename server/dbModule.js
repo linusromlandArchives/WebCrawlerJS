@@ -76,9 +76,7 @@ exports.removeLonk = async (Model, link) => {
 
 exports.searchInDB = async (Model, link) => {
   const regex = new RegExp(escapeRegex(link), "gi");
-  return await Model.find({
-    $and: [{ $or: [{ link: regex }] }],
-  }).limit(20);
+  return await Model.find({ link: regex }).limit(20);
 };
 
 function escapeRegex(text) {
