@@ -30,7 +30,7 @@ function generateList(json) {
     if (element.link.length >= 50) {
       result.innerText = element.link.substring(0, 50) + "...";
     } else {
-      result.innerText = element.link + " " + element.hits;
+      result.innerText = element.link;
     }
 
     result.href = element.link;
