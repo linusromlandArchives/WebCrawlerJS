@@ -56,6 +56,10 @@ async function main() {
 
 //Fetches from link using node-fetch
 async function fetchLink(url) {
+  if(length % 500  == 0){
+    length = await dBModule.getLength(Link);
+  }
+
   return new Promise((resolve, reject) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => {
