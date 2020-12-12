@@ -39,7 +39,7 @@ exports.findInDBOne = async (Model) => {
 };
 
 exports.searchInDBOne = async (Model, link) => {
-  return await Model.findOne({link: link});
+  return await Model.findOne({ link: link });
 };
 
 exports.findInDB = async (Model) => {
@@ -66,9 +66,18 @@ exports.visit = async (Model, link) => {
 
 exports.hit = async (Model, link) => {
   await Model.updateOne({ link: link }, { $inc: { hits: 1 } });
-}
+};
 
 exports.removeLonk = async (Model, link) => {
-  console.error("Deleted link " + link)
+  console.error("Deleted link " + link);
   await Model.deleteMany({ link: link });
+};
+
+exports.searchInDB = async (Model, link) => {
+  const regex = new RegExp(escapeRegex(link), "gi");
+  return await Model.find({ link: regex }).limit(20);
+};
+
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 }
