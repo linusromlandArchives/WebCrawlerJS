@@ -56,8 +56,9 @@ exports.getUnvisited = async (Model) => {
 };
 
 exports.getLength = async (Model) => {
-  let tmp = await Model.find();
-  return await tmp.length;
+  /*let tmp = await Model.find();
+  return await tmp.length;*/
+  return "N/A";
 };
 
 exports.visit = async (Model, link) => {
