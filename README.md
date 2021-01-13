@@ -55,10 +55,8 @@ If you have your MongoDB Database with authentication turned on you could use th
 To do this copy the file named **mongoauth.json.example** and name it **mongoauth.json** and then specify your credentials in the file
 
 
+<!-- LICENSE -->
 ## License
 
-**WebCrawler** is under MIT License.
- For information about MIT check out the following link:
-  https://github.com/linusromland/WebCrawler/blob/master/LICENSE
-
+Distributed under the MIT License. See `LICENSE` for more information.
 
